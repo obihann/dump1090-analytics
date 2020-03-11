@@ -5,6 +5,7 @@ import glob
 import os
 import time
 import datetime
+import urllib.request
 
 
 flights = []
@@ -72,7 +73,8 @@ icao_codes = {
         "EWR": "Ewa Air",
         "TAN": "Transportes Aéreos Nacionales",
         "ARL": "Airlec - Air Aquitaine Transport",
-        "RRR": "UK Royal Air Force"
+        "RRR": "UK Royal Air Force",
+        "CFC": "Canadian Forces",
         }
 
 force = False
@@ -85,27 +87,26 @@ except:
     force = True
     last_run = time.time()
 
-for filename in glob.glob('/var/run/dump1090-fa/history*.json'):
-    last_modified = os.path.getmtime(filename)
+raw = urllib.request.urlopen("http://192.168.0.90:8080/data/aircraft.json")
+data = json.load(raw)
 
-    if (float(last_run) <= float(last_modified)) or force == True:
-        with open(filename) as f:
-            data = json.load(f)
+last_modified = data["now"]
 
-        for obj in data["aircraft"]:
-            if "flight" in obj:
-                flight = obj["flight"].strip()
-                flights.append(flight)
+if (float(last_run) <= float(last_modified)) or force == True:
+    for obj in data["aircraft"]:
+        if "flight" in obj:
+            flight = obj["flight"].strip()
+            flights.append(flight)
 
-        flights = list(dict.fromkeys(flights))
-        flights = sorted(flights)
+    flights = list(dict.fromkeys(flights))
+    flights = sorted(flights)
 
-        for flight in flights:
-            if flight[0:3] in icao_codes:
-                print("%s (%s)" % (flight, icao_codes[flight[0:3]]))
-            else:
-                if flight[0:2] in iata_codes:
-                    print("%s (%s)" % (flight, iata_codes[flight[0:2]]))
+    for flight in flights:
+        if flight[0:3] in icao_codes:
+            print("%s (%s)" % (flight, icao_codes[flight[0:3]]))
+        else:
+            if flight[0:2] in iata_codes:
+                print("%s (%s)" % (flight, iata_codes[flight[0:2]]))
 
 
 timefile = open(".lastrun","w")
