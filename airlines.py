@@ -9,7 +9,8 @@ import urllib.request
 
 
 flights = []
-
+unknown_codes = []
+force = False
 categories = {
         'A1': 'light',
         'A2': 'medium',
@@ -17,7 +18,6 @@ categories = {
         'A5': 'heavy',
         'A7': 'rotorcraft'
         }
-
 iata_codes = {
         "AA": "American Airlines",
         "AC": "Air Canada",
@@ -33,7 +33,6 @@ iata_codes = {
         "ZD": "Ewa Air",
         "TX": "Transportes Aéreos Nacionales",
         }
-
 icao_codes = {
         "AAL": "American Airlines",
         "ACA": "Air Canada",
@@ -75,9 +74,8 @@ icao_codes = {
         "ARL": "Airlec - Air Aquitaine Transport",
         "RRR": "UK Royal Air Force",
         "CFC": "Canadian Forces",
+        "POE": "Porter Airlines",
         }
-
-force = False
 
 try:
     timefile = open(".lastrun")
@@ -107,7 +105,12 @@ if (float(last_run) <= float(last_modified)) or force == True:
         else:
             if flight[0:2] in iata_codes:
                 print("%s (%s)" % (flight, iata_codes[flight[0:2]]))
+            else:
+                unknown_codes.append(flight)
 
+if unknown_codes != []:
+    print("\nUnknown Flights")
+    print(unknown_codes)
 
 timefile = open(".lastrun","w")
 timefile.write(str(time.time()))
