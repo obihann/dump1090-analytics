@@ -20,7 +20,11 @@ def load_dump1090_data():
 
 def main():
     flights = []
+    known_flights = []
     unknown_codes = []
+    last_run = time.time()
+    now = time.time()
+    now_string = time.strftime("%c %T")
     force = False
     categories = load_local_json("./data/categories.json")
     icao_codes = load_local_json("./data/icao.json")
@@ -33,30 +37,25 @@ def main():
         timefile.close
     except:
         force = True
-        last_run = time.time()
 
     if (float(last_run) <= float(data["now"])) or force == True:
-        for obj in data["aircraft"]:
-            if "flight" in obj:
-                flight = obj["flight"].strip()
-                flights.append(flight)
-
+        flights = [obj["flight"].strip() for obj in data["aircraft"] if "flight" in obj]
         flights = list(dict.fromkeys(flights))
         flights = sorted(flights)
 
         for flight in flights:
             if flight[0:3] in icao_codes:
-                print("%s (%s)" % (flight, icao_codes[flight[0:3]]))
+                known_flights.append("%s (%s) (Last seen: %s)" % (flight, icao_codes[flight[0:3]], now_string))
+            elif flight[0:2] in iata_codes:
+                known_flights.append("%s (%s) (Last seen: %s)" % (flight, iata_codes[flight[0:2], now_string]))
             else:
-                if flight[0:2] in iata_codes:
-                    print("%s (%s)" % (flight, iata_codes[flight[0:2]]))
-                else:
-                    unknown_codes.append(flight)
+                unknown_codes.append(flight)
+
+    if known_flights != []:
+        print("Flights:\n%s" % '\n'.join(known_flights))
 
     if unknown_codes != []:
-        print("\nUnknown Flights")
-        print(unknown_codes)
-
+        print("\nUnknown:\n%s" % '\n'.join(unknown_codes))
 
     timefile = open(".lastrun", "w")
     timefile.write(str(time.time()))
